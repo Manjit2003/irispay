@@ -10,12 +10,7 @@ import { toNodeHandler } from "better-auth/node";
 const app = express();
 
 app.use(
-  cors({
-    origin: process.env.CORS_ORIGIN || "",
-    methods: ["GET", "POST", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-    credentials: true,
-  })
+  cors() // currently allows all origins
 );
 
 app.all("/api/auth{/*path}", toNodeHandler(auth));
@@ -24,13 +19,11 @@ app.use(
   "/trpc",
   createExpressMiddleware({
     router: appRouter,
-    createContext
+    createContext,
   })
 );
 
-
-app.use(express.json())
-
+app.use(express.json());
 
 app.get("/", (_req, res) => {
   res.status(200).send("OK");
