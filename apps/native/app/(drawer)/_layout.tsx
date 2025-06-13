@@ -1,39 +1,53 @@
-import { Ionicons, MaterialIcons } from "@expo/vector-icons";
-import { Link } from "expo-router";
 import { Drawer } from "expo-router/drawer";
+import { useColorScheme } from "@/lib/use-color-scheme";
+import { authClient } from "@/lib/auth-client";
+import { Text, View } from "react-native";
 
-import { HeaderButton } from "@/components/header-button";
+export default function DrawerLayout() {
+  const { isDarkColorScheme } = useColorScheme();
+  const { data: session } = authClient.useSession();
 
-const DrawerLayout = () => {
   return (
-    <Drawer>
-      <Drawer.Screen
-        name="index"
-        options={{
-          headerTitle: "Home",
-          drawerLabel: "Home",
-          drawerIcon: ({ size, color }) => (
-            <Ionicons name="home-outline" size={size} color={color} />
-          ),
-        }}
-      />
+    <Drawer
+      screenOptions={{
+        headerShown: false,
+        drawerStyle: {
+          backgroundColor: isDarkColorScheme
+            ? "hsl(222.2 84% 4.9%)"
+            : "hsl(0 0% 100%)",
+        },
+        drawerActiveTintColor: isDarkColorScheme
+          ? "hsl(217.2 91.2% 59.8%)"
+          : "hsl(221.2 83.2% 53.3%)",
+        drawerInactiveTintColor: isDarkColorScheme
+          ? "hsl(215 20.2% 65.1%)"
+          : "hsl(215.4 16.3% 46.9%)",
+      }}
+    >
       <Drawer.Screen
         name="(tabs)"
         options={{
-          headerTitle: "Tabs",
-          drawerLabel: "Tabs",
-          drawerIcon: ({ size, color }) => (
-            <MaterialIcons name="border-bottom" size={size} color={color} />
-          ),
-          headerRight: () => (
-            <Link href="/modal" asChild>
-              <HeaderButton />
-            </Link>
+          title: "Home",
+          drawerLabel: () => (
+            <View className="py-2">
+              <Text
+                className={`text-base ${
+                  isDarkColorScheme ? "text-white" : "text-gray-900"
+                }`}
+              >
+                {session?.user.name}
+              </Text>
+              <Text
+                className={`text-sm ${
+                  isDarkColorScheme ? "text-gray-400" : "text-gray-500"
+                }`}
+              >
+                {session?.user.email}
+              </Text>
+            </View>
           ),
         }}
       />
     </Drawer>
   );
-};
-
-export default DrawerLayout;
+}

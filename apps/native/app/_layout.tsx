@@ -1,5 +1,5 @@
 import { QueryClientProvider } from "@tanstack/react-query";
-import { Stack } from "expo-router";
+import { Redirect, Stack } from "expo-router";
 import {
   DarkTheme,
   DefaultTheme,
@@ -13,8 +13,9 @@ import { queryClient } from "@/utils/trpc";
 import { NAV_THEME } from "@/lib/constants";
 import React, { useRef } from "react";
 import { useColorScheme } from "@/lib/use-color-scheme";
-import { Platform } from "react-native";
+import { Platform, View } from "react-native";
 import { setAndroidNavigationBar } from "@/lib/android-navigation-bar";
+import { authClient } from "@/lib/auth-client";
 
 const LIGHT_THEME: Theme = {
   ...DefaultTheme,
@@ -26,14 +27,15 @@ const DARK_THEME: Theme = {
 };
 
 export const unstable_settings = {
-  initialRouteName: "(drawer)",
+  initialRouteName: "(drawer)/(tabs)",
 };
-
 
 export default function RootLayout() {
   const hasMounted = useRef(false);
   const { colorScheme, isDarkColorScheme } = useColorScheme();
   const [isColorSchemeLoaded, setIsColorSchemeLoaded] = React.useState(false);
+  const { data: session, isPending: isSessionLoading } =
+    authClient.useSession();
 
   useIsomorphicLayoutEffect(() => {
     if (hasMounted.current) {
@@ -48,9 +50,27 @@ export default function RootLayout() {
     hasMounted.current = true;
   }, []);
 
-  if (!isColorSchemeLoaded) {
-    return null;
+  // Show loading state while color scheme or session is loading
+  if (!isColorSchemeLoaded || isSessionLoading) {
+    return <View className="flex-1 bg-background" />;
   }
+
+  // Handle authentication redirects
+  if (!session?.user) {
+    return (
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider value={isDarkColorScheme ? DARK_THEME : LIGHT_THEME}>
+          <StatusBar style={isDarkColorScheme ? "light" : "dark"} />
+          <GestureHandlerRootView style={{ flex: 1 }}>
+            <Stack>
+              <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+            </Stack>
+          </GestureHandlerRootView>
+        </ThemeProvider>
+      </QueryClientProvider>
+    );
+  }
+
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider value={isDarkColorScheme ? DARK_THEME : LIGHT_THEME}>
